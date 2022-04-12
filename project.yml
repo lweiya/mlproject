@@ -17,8 +17,7 @@ vars:
 # 文件夹检测
 directories: ["assets", "corpus", "configs", "training", "scripts", "packages"]
 
-# Assets that should be downloaded or available in the directory. We're shipping
-# them with the project, so they won't have to be downloaded.
+# assets文件夹保存训练数据
 assets:
   - dest: "assets/train.json"
     description: "Demo training data converted from the v2 `train_ner.py` example with `srsly.write_json(\"train.json\", TRAIN_DATA)`"
