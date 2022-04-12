@@ -8,7 +8,15 @@ import spacy
 import random
 import itertools
 from doccano_api_client import DoccanoClient
+import configparser
 
+
+def b_parse_config():
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    return config
+
+configs = b_parse_config()
 
 # 数据库导出字段 details
 # doccano 导入字段 text label
@@ -38,9 +46,9 @@ DATABASE_PATH = ROOT_PATH + 'database/'
 
 # instantiate a client and log in to a Doccano instance
 doccano_client = DoccanoClient(
-    'http://47.108.218.88:18000',
-    'admin',
-    'pwadmin'
+    configs['doccano']['url'],
+    configs['doccano']['user'],
+    configs['doccano']['password']
 )
 
 # df保存jsonl文件
