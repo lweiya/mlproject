@@ -340,10 +340,62 @@ def b_doccano_upload(file):
 # if __name__ == '__main__':
 #     pass
 
-df = b_file_2_df('Untitled.csv')
-df = df.head(100)
-b_save_df_datasets(df,'test.json')
-b_doccano_upload('test.json')
+train = b_read_dataset('train.json')
+dev = b_read_dataset('dev.json')
+
+# 合并训练集和测试集
+train_dev = train + dev
+
+# id,data,label,file
+# 提取data字段
+train_dev_data = [entry['data'] for entry in train_dev]
+
+nlp = b_load_best_model()
+
+docs = nlp.pipe(train_dev_data)
+
+predicts = []
+for doc in docs:
+    predict = [[ent.text,ent.label_] for ent in doc.ents]
+    predicts.append(predict)
+
+for sample,predict in zip(train_dev,predicts):
+    text = sample['data']
+    labels = sample['label']
+    sample_label = [[text[label[0]:label[1]],label[2]] for label in labels]
+    for entry in sample_label:
+        if entry not in predict:
+            sample['cats'] = {"需要":1,"不需要":0}
+            break
+        else:
+            sample['cats'] = {"需要":0,"不需要":1} 
+            break
+
+# {"cats":{"需要":1,"不需要":0}}
+# 统计cats种类
+pos = []
+neg = []
+for sample in train_dev:
+    if sample['cats']['需要'] == 1:
+        pos.append(sample)
+    else:
+        neg.append(sample)
+
+# 随机排列pos，neg
+random.shuffle(pos)
+random.shuffle(neg)
+
+# train_cat,dev_cat
+train_cat = pos[:int(len(pos)*0.8)] + neg[:int(len(neg)*0.8)]
+dev_cat = pos[int(len(pos)*0.8):] + neg[int(len(neg)*0.8):]
+
+b_save_list_datasets(train_cat,'train_cat.json')
+b_save_list_datasets(dev_cat,'dev_cat.json')
+
+
+
+
+
 
 
 
