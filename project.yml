@@ -24,9 +24,7 @@ assets:
   - dest: "assets/dev.json"
     description: "Demo development data"
 
-# Workflows are sequences of commands (see below) executed in order. You can
-# run them via "spacy project run [workflow]". If a commands's inputs/outputs
-# haven't changed, it won't be re-run.
+# 工作流，现在提供了标准的all和提供服务的工作流
 workflows:
   all:
     - convert
@@ -35,19 +33,14 @@ workflows:
   start:
     - install
     - serve
+  train-cats:
+    - convert_cats
+    - train_cats
 
-# Project commands, specified in a style similar to CI config files (e.g. Azure
-# pipelines). The name is the command name that lets you trigger the command
-# via "spacy project run [command] [path]". The help message is optional and
-# shown when executing "spacy project run [optional command] [path] --help".
+# 项目命令
 commands:
-  - name: "download"
-    help: "Download a spaCy model with pretrained vectors"
-    script:
-      - "python -m spacy download ${vars.vectors_model}"
-
   - name: "convert"
-    help: "Convert the data to spaCy's binary format"
+    help: "convert to ner data"
     script:
       - "python scripts/convert.py ${vars.lang} assets/${vars.train} corpus/train.spacy"
       - "python scripts/convert.py ${vars.lang} assets/${vars.dev} corpus/dev.spacy"
@@ -59,12 +52,26 @@ commands:
       - "corpus/train.spacy"
       - "corpus/dev.spacy"
 
+    - name: "convert_cats"
+    help: "convert to cats data"
+    script:
+      - "python scripts/convert_cats.py ${vars.lang} assets/train_cats.json corpus/train_cats.spacy"
+      - "python scripts/convert_cats.py ${vars.lang} assets/dev_cats.json corpus/dev_cats.spacy"
+    deps:
+      - "assets/train_cats.json"
+      - "dev_cats.json"
+      - "scripts/convert_cats.py"
+    outputs:
+      - "corpus/train_cats.spacy"
+      - "corpus/dev_cats.spacy"
+
   - name: "create-config"
     help: "Create a new config with an NER pipeline component"
     script:
       - "python -m spacy init config --lang ${vars.lang} --pipeline ner configs/config.cfg --force"
     outputs:
       - "configs/config.cfg"
+
   - name: "train"
     help: "Train the NER model"
     script:
@@ -74,7 +81,18 @@ commands:
       - "corpus/train.spacy"
       - "corpus/dev.spacy"
     outputs:
-      - "training/model-best"
+      - "training/model_best"
+
+  - name: "train_cats"
+    help: "Train the cat model"
+    script:
+      - "python -m spacy train configs/config_cats.cfg --output training/ --paths.train corpus/train_cats.spacy --paths.dev corpus/dev_cats.spacy  --gpu-id ${vars.gpu_id}"
+    deps:
+      - "configs/config_cats.cfg"
+      - "corpus/train_cats.spacy"
+      - "corpus/dev_cats.spacy"
+    outputs:
+      - "training/cats_model_best"
 
   - name: "train-with-vectors"
     help: "Train the NER model with vectors"
@@ -105,14 +123,6 @@ commands:
       - "training/model-best"
     outputs_no_cache:
       - "packages/${vars.lang}_${vars.name}-${vars.version}/dist/${vars.lang}_${vars.name}-${vars.version}.tar.gz"
-
-  - name: visualize-model
-    help: Visualize the model's output interactively using Streamlit
-    script:
-      - "streamlit run scripts/visualize_model.py training/model-best \"I saw Shaka Khan in London.\""
-    deps:
-      - "scripts/visualize_model.py"
-      - "training/model-best"
 
   - name: "install"
     help: "Install dependencies and download models"
