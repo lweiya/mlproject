@@ -14,8 +14,7 @@ vars:
   host: "127.0.0.1"
   port: 5000
 
-# These are the directories that the project needs. The project CLI will make
-# sure that they always exist.
+# 文件夹检测
 directories: ["assets", "corpus", "configs", "training", "scripts", "packages"]
 
 # Assets that should be downloaded or available in the directory. We're shipping
