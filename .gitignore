@@ -1,3 +1,5 @@
+.DS_store
+
 # 文件夹
 
 
@@ -133,3 +135,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 scripts/config.ini
+.DS_Store
+.DS_Store
