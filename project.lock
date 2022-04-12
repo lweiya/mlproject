@@ -1,0 +1,73 @@
+convert:
+  cmd: python -m spacy run convert
+  script:
+    - python scripts/convert.py zh assets/train.json corpus/train.spacy
+    - python scripts/convert.py zh assets/dev.json corpus/dev.spacy
+  deps:
+    - path: assets/train.json
+      md5: 982a17009815cb0dc10946dcbf7935d6
+    - path: assets/dev.json
+      md5: 46ab4319b7a4063868c11daef4098e74
+    - path: scripts/convert.py
+      md5: 5c76c5c89aaff9b467394d6153ba6b34
+  outs:
+    - path: corpus/train.spacy
+      md5: 1aa18872d5cb91f500fe4f991debe53b
+    - path: corpus/dev.spacy
+      md5: 42fc8c8d893833c9952e719ed63de6c4
+  spacy_version: 3.2.4
+  spacy_git_version: b50fe5ec6
+create-config:
+  cmd: python -m spacy run create-config
+  script:
+    - python -m spacy init config --lang zh --pipeline ner configs/config.cfg --force
+  deps: []
+  outs:
+    - path: configs/config.cfg
+      md5: 0ea93da17b4432008ff52dc90ad6023d
+  spacy_version: 3.2.3
+  spacy_git_version: 99425de36
+train:
+  cmd: python -m spacy run train
+  script:
+    - python -m spacy train configs/config.cfg --output training/ --paths.train corpus/train.spacy
+      --paths.dev corpus/dev.spacy  --gpu-id 0
+  deps:
+    - path: configs/config.cfg
+      md5: dddb750a34796351d57febb48c552ec9
+    - path: corpus/train.spacy
+      md5: ef7bf266cf76d048f84896c219f8cb61
+    - path: corpus/dev.spacy
+      md5: 42fc8c8d893833c9952e719ed63de6c4
+  outs:
+    - path: training/model-best
+      md5: 7b07ef01375cea752da7069af1a4937c
+  spacy_version: 3.2.4
+  spacy_git_version: b50fe5ec6
+evaluate:
+  cmd: python -m spacy run evaluate
+  script:
+    - python -m spacy evaluate training/model-best corpus/dev.spacy --output training/metrics.json
+  deps:
+    - path: corpus/dev.spacy
+      md5: 7a7b2e2c4e9275ca40da8ea7c40eff5f
+    - path: training/model-best
+      md5: 610219b381b88b2777f6792ad08bf4ae
+  outs:
+    - path: training/metrics.json
+      md5: 6002b7617b5f82be64e153e74f3732d7
+  spacy_version: 3.2.4
+  spacy_git_version: b50fe5ec6
+package:
+  cmd: python -m spacy run package
+  script:
+    - python -m spacy package training/model-best packages --name ner_tender --version
+      0.0.1 --force
+  deps:
+    - path: training/model-best
+      md5: 943f0fdaa93b20aa3d126e44fe5ee56c
+  outs:
+    - path: packages/zh_ner_tender-0.0.1/dist/zh_ner_tender-0.0.1.tar.gz
+      md5: 53b97d9b95a4b12b50c20d512d776155
+  spacy_version: 3.2.4
+  spacy_git_version: b50fe5ec6

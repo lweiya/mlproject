@@ -1,3 +1,16 @@
+# 文件夹
+assets
+corpus
+data
+database
+output
+packages
+training
+
+
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
