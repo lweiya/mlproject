@@ -59,7 +59,7 @@ commands:
       - "python scripts/convert_cats.py ${vars.lang} assets/dev_cats.json corpus/dev_cats.spacy"
     deps:
       - "assets/train_cats.json"
-      - "dev_cats.json"
+      - "assets/dev_cats.json"
       - "scripts/convert_cats.py"
     outputs:
       - "corpus/train_cats.spacy"
