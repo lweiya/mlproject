@@ -33,7 +33,7 @@ workflows:
   start:
     - install
     - serve
-  train_cats:
+  all_cats:
     - convert_cats
     - train_cats
 
