@@ -9,6 +9,7 @@ import random
 import itertools
 from doccano_api_client import DoccanoClient
 import configparser
+import math
 
 
 def b_parse_config():
@@ -196,6 +197,51 @@ def p_filter_tags(text) -> str:
     s = p_replaceCharEntity(s)  # 替换实体
     return s
 
+# 计算分割点
+def p_cal_boder_end(block,length=500):
+    borders_end = []
+    # 计算出边界值
+    for i in range(block):
+        borders_end.append((i+1) * length)
+    return borders_end
+
+# 分割标签
+def p_cal_border_and_label_belong(labels,borders_end):
+    label_loc = []
+    for label in labels:
+        start = label[0]
+        end = label[1]
+        for idx,border in enumerate(borders_end):
+            if start < border and end < border:
+                label_loc.append(idx)
+                break
+            if start < border and end > border:
+                pad = end - border + 20
+                label_loc.append(idx)
+                for idxc,border in enumerate(borders_end):
+                    if idxc >= idx:
+                        borders_end[idxc] += pad
+                break
+    return label_loc
+
+# 拆分数据集
+def p_generate_new_datasets(new_data, text, labels, borders_end, borders_start, label_loc,id):
+    idx = 0
+    for b_start,b_end in zip(borders_start,borders_end):
+        entry = {}
+        entry['data'] = text[b_start:b_end]
+        new_labels = []
+        for idxl,loc in enumerate(label_loc):
+            if loc == idx:
+                label = labels[idxl].copy()
+                label[0] -= b_start
+                label[1] -= b_start
+                new_labels.append(label)
+        entry['label'] = new_labels
+        entry['id'] = id
+        idx += 1
+        if len(new_labels) != 0:
+            new_data.append(entry)
 
 # ——————————————————————————————————————————————————
 # 构建层
@@ -384,12 +430,65 @@ def b_generate_cats_datasets():
     b_save_list_datasets(train_cat,'train_cats.json')
     b_save_list_datasets(dev_cat,'dev_cats.json')
 
+# 读取训练集的标签情况
+def b_read_train_label_counts():
+    train = b_read_dataset('train.json')
+    label_counts = b_label_counts(train)
+    return label_counts
+
+# 读取训练集的labels并且保存
+def b_save_labes():
+    label_counts = b_read_train_label_counts()
+    l = list(label_counts.keys())
+    d_save_file(l,"labels.txt")
+
+# 分割数据集
+def b_cut_datasets_size_pipe(file):
+    data = b_read_dataset(file)
+
+    new_data = []
+    for entry in data:
+        id = entry['id']
+        text = entry['data']
+        labels = entry['label']
+        if len(text) < 500:
+            new_data.append(entry)
+        else:
+            blcok = math.ceil(len(text) / 500)
+            borders_end = p_cal_boder_end(blcok)
+            borders_start = [0] + [i + 1 for i in borders_end[:-1]]
+            label_loc = p_cal_border_and_label_belong(labels,borders_end)
+            p_generate_new_datasets(new_data, text, labels, borders_end, borders_start, label_loc,id)
+    return new_data
+
+# 转换成百度excel格式，需要调整表头
+def b_baidu_excel_format(file):
+    new_data = b_cut_datasets_size_pipe(file)
+
+    excel_data = []
+    for entry in new_data:
+        item = []
+        item.append(entry['data'])
+        labels = entry['label']
+        for label in labels:
+            loc = [label[0],label[1]]
+            la = str(loc) +','+ label[2]
+            item.append(la)
+        excel_data.append(item)
+
+    df = pd.DataFrame(excel_data)
+
+    df.to_excel(file.split('.')[0] + '_new.xlsx',index=False)
+
 # ——————————————————————————————————————————————————
 # 调用
 # ——————————————————————————————————————————————————
 
 # if __name__ == '__main__':
 #     pass
+
+
+
 
 
 
