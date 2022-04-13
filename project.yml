@@ -86,7 +86,7 @@ commands:
   - name: "train_cats"
     help: "Train the cat model"
     script:
-      - "python -m spacy train configs/config_cats.cfg --output training/ --paths.train corpus/train_cats.spacy --paths.dev corpus/dev_cats.spacy  --gpu-id ${vars.gpu_id}"
+      - "python -m spacy train configs/config_cats.cfg --output training/cats/ --paths.train corpus/train_cats.spacy --paths.dev corpus/dev_cats.spacy  --gpu-id ${vars.gpu_id}"
     deps:
       - "configs/config_cats.cfg"
       - "corpus/train_cats.spacy"
