@@ -520,6 +520,8 @@ def b_select_data_by_model(dataset_name,num):
 # if __name__ == '__main__':
 #     pass
 
+db = b_read_db_basic()
 
+db['text'].to_csv('../data/unlabeled_train_data.txt',index=False)
 
 
