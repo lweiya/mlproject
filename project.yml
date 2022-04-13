@@ -138,3 +138,10 @@ commands:
     deps:
       - "scripts/main.py"
     no_skip: true
+
+  - name: "pretrain"
+    help: "pretrain huggingface model"
+    script:
+      - "python scripts/simces.py"
+    deps:
+      - "data/unlabeled_train_data.txt"
