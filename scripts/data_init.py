@@ -480,6 +480,39 @@ def b_baidu_excel_format(file):
 
     df.to_excel(file.split('.')[0] + '_new.xlsx',index=False)
 
+# 读取新的文件进入到basic中
+def b_add_new_file_to_db_basic(file):
+    df = b_file_2_df(file)
+    db = b_read_db_basic()
+    df_db = pd.concat([db,df],axis=0)
+    # 根据md5排重
+    df_db = df_db.drop_duplicates(subset='md5',keep='first')
+    b_save_db_basic(df_db)
+
+# 从基础库中抽取未被业务未被抽样的数据
+def b_extrct_data_from_db_basic(dataset_name):
+    db = b_read_db_basic()
+    db_dataset = b_read_db_datasets()
+    db_dataset = db_dataset[db_dataset['dataset'].str.contains(dataset_name)]
+    return db[db['md5'].isin(db_dataset['md5']) == False]
+
+
+# 根据cats模型选择数据
+def b_select_data_by_model(dataset_name,num):
+    db = b_extrct_data_from_db_basic('tender')
+    nlp = b_load_best_cats()
+
+    sample_data = []
+    for index,row in db.iterrows():
+        text = row['text']
+        doc = nlp(text)
+        if doc.cats['需要'] >= 0.5 and doc.cats['需要'] <= 0.6:
+            sample_data.append(row)
+        if len(sample_data) == 100:
+            break
+
+    return pd.DataFrame(sample_data)
+
 # ——————————————————————————————————————————————————
 # 调用
 # ——————————————————————————————————————————————————
@@ -490,12 +523,3 @@ def b_baidu_excel_format(file):
 
 
 
-
-
-
-
-
-
-
-
- 
