@@ -34,8 +34,8 @@ workflows:
     - install
     - serve
   train-cats:
-    - convert_cats
-    - train_cats
+    - convert-cats
+    - train-cats
 
 # 项目命令
 commands:
@@ -52,7 +52,7 @@ commands:
       - "corpus/train.spacy"
       - "corpus/dev.spacy"
 
-    - name: "convert_cats"
+    - name: "convert-cats"
     help: "convert to cats data"
     script:
       - "python scripts/convert_cats.py ${vars.lang} assets/train_cats.json corpus/train_cats.spacy"
@@ -83,7 +83,7 @@ commands:
     outputs:
       - "training/model_best"
 
-  - name: "train_cats"
+  - name: "train-cats"
     help: "Train the cat model"
     script:
       - "python -m spacy train configs/config_cats.cfg --output training/ --paths.train corpus/train_cats.spacy --paths.dev corpus/dev_cats.spacy  --gpu-id ${vars.gpu_id}"
