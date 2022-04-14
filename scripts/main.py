@@ -8,6 +8,7 @@ from pydantic import BaseModel
 import spacy
 from spacy.tokens import Doc
 
+
 # 这是api使用的模型
 class ModelName(str, Enum):
     # Enum of the available models. This allows the API to raise a more specific
@@ -16,7 +17,8 @@ class ModelName(str, Enum):
 
 
 DEFAULT_MODEL = ModelName.zh_ner_tender
-nlp_model = spacy.load(DEFAULT_MODEL.value)
+path = '../training/model-best'
+nlp_model = spacy.load(path)
 
 
 
@@ -47,7 +49,6 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"])
 @app.post("/process/", summary="Process text")
 def process_text(query: RequestModel):
     nlp = nlp_model
-    response_body = []
     text = query.text
     doc = nlp(text)
     # response_body.append(get_data(doc))
