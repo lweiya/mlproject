@@ -1,4 +1,4 @@
-ROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
 COPY ./requirements.txt /app/
 COPY ./zh_ner_tender /app/zh_ner_tender
 WORKDIR /app/zh_ner_tender
