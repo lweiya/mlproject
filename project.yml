@@ -36,6 +36,10 @@ workflows:
   all_cats:
     - convert_cats
     - train_cats
+  all_trf_pre_train:
+    - convert
+    - trf_pre_train
+    - evaluate
 
 # 项目命令
 commands:
@@ -142,6 +146,17 @@ commands:
   - name: "pretrain"
     help: "pretrain huggingface model"
     script:
-      - "python scripts/simces.py"
+      - "python scripts/simcse.py"
     deps:
       - "data/unlabeled_train_data.txt"
+
+  - name: "trf_pre_train"
+    help: "Train the NER model"
+    script:
+      - "python -m spacy train configs/config_trf.cfg --output training/ --paths.train corpus/train.spacy --paths.dev corpus/dev.spacy  --gpu-id ${vars.gpu_id}"
+    deps:
+      - "configs/config_trf.cfg"
+      - "corpus/train.spacy"
+      - "corpus/dev.spacy"
+    outputs:
+      - "training/model_best" 
