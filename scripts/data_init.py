@@ -547,6 +547,31 @@ def b_doccano_delete(project_id):
     for entry in r['results']:
         doccano_client.delete_document(project_id,entry['id'])
 
+
+# 在doccnano中查看某个标签的情况
+def b_dataset_label_doccano_view(file,labels,project_id):
+    b_doccano_delete(project_id)
+    train = b_read_dataset(file)
+    new_train = []
+    for entry in train:
+        text = entry['data']
+        for label in entry['label']:
+            new_entry = {}
+            new_entry['id'] = entry['id']
+            start = label[0]
+            end = label[1]
+            s_start = start - 200 if start - 200 > 0 else 0
+            s_end = end + 200 if end + 200 < len(text) else len(text)
+            new_entry['text'] = text[s_start:s_end]
+            label_ = [[start - s_start,end - s_start,label[2]]]
+            new_entry['label'] = label_
+            new_entry['s_start'] = s_start
+            new_entry['s_end'] = s_end
+            if label[2] in labels:
+                new_train.append(new_entry)
+    b_save_list_datasets(new_train,'train_new.json')
+    b_doccano_upload('train_new.json')   
+
 # ——————————————————————————————————————————————————
 # 调用
 # ——————————————————————————————————————————————————
@@ -554,7 +579,11 @@ def b_doccano_delete(project_id):
 # if __name__ == '__main__':
 #     pass
 
-db = b_read_db_basic()
 
-db['text'].to_csv('../data/unlabeled_train_data.txt',index=False)
+
+
+
+
+
+
 
