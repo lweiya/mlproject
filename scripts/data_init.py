@@ -58,25 +58,6 @@ doccano_client = DoccanoClient(
 )
 
 
-# 从doccano获取数据
-def d_export_project(project_id,path):
-    url = configs['doccano']['url']
-    result = doccano_client.post(f'{url}/v1/projects/{project_id}/download', json={'exportApproved': False, 'format': 'JSONL'}) 
-    task_id = result['task_id']
-    while True:
-        result = doccano_client.get(f'{url}/v1/tasks/status/{task_id}')
-        if result['ready']:
-            break
-        time.sleep(1)
-    result = doccano_client.get_file(f'{url}/v1/projects/{project_id}/download?taskId={task_id}')
-    tmp_zip_path = ASSETS_PATH + '1.zip'
-    with open(tmp_zip_path, 'wb') as f:
-        for chunk in result.iter_content(chunk_size=8192): 
-            f.write(chunk)
-    zipfile.ZipFile(tmp_zip_path).extractall(path=ASSETS_PATH)
-    os.rename(ASSETS_PATH + 'all.jsonl', ASSETS_PATH + path)
-    os.remove(tmp_zip_path)
-
 # df保存jsonl文件
 def d_save_df_datasets(df,path):
     with open(path,'w',encoding='utf-8') as f:
@@ -538,6 +519,34 @@ def b_select_data_by_model(dataset_name,num):
 
     return pd.DataFrame(sample_data)
 
+    # 从doccano获取数据
+def b_export_project(project_id,path):
+    url = configs['doccano']['url']
+    result = doccano_client.post(f'{url}/v1/projects/{project_id}/download', json={'exportApproved': False, 'format': 'JSONL'}) 
+    task_id = result['task_id']
+    while True:
+        result = doccano_client.get(f'{url}/v1/tasks/status/{task_id}')
+        if result['ready']:
+            break
+        time.sleep(1)
+    result = doccano_client.get_file(f'{url}/v1/projects/{project_id}/download?taskId={task_id}')
+    tmp_zip_path = ASSETS_PATH + '1.zip'
+    with open(tmp_zip_path, 'wb') as f:
+        for chunk in result.iter_content(chunk_size=8192): 
+            f.write(chunk)
+    zipfile.ZipFile(tmp_zip_path).extractall(path=ASSETS_PATH)
+    os.rename(ASSETS_PATH + 'all.jsonl', ASSETS_PATH + path)
+    os.remove(tmp_zip_path)
+
+
+# 删除项目中的数据
+def b_doccano_delete(project_id):
+    r = doccano_client.get_document_list(project_id)
+    length = r['count']
+    r = doccano_client.get_document_list(project_id,{'limit':[length],'offset':[0]})
+    for entry in r['results']:
+        doccano_client.delete_document(project_id,entry['id'])
+
 # ——————————————————————————————————————————————————
 # 调用
 # ——————————————————————————————————————————————————
@@ -548,5 +557,4 @@ def b_select_data_by_model(dataset_name,num):
 db = b_read_db_basic()
 
 db['text'].to_csv('../data/unlabeled_train_data.txt',index=False)
-
 
