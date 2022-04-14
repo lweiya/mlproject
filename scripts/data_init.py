@@ -10,14 +10,19 @@ import itertools
 from doccano_api_client import DoccanoClient
 import configparser
 import math
+import time
+import zipfile
+import os
 
 
-def b_parse_config():
+def d_parse_config():
     config = configparser.ConfigParser()
     config.read('config.ini')
     return config
 
-configs = b_parse_config()
+configs = d_parse_config()
+
+
 
 # 数据库导出字段 details
 # doccano 导入字段 text label
@@ -51,6 +56,26 @@ doccano_client = DoccanoClient(
     configs['doccano']['user'],
     configs['doccano']['password']
 )
+
+
+# 从doccano获取数据
+def d_export_project(project_id,path):
+    url = configs['doccano']['url']
+    result = doccano_client.post(f'{url}/v1/projects/{project_id}/download', json={'exportApproved': False, 'format': 'JSONL'}) 
+    task_id = result['task_id']
+    while True:
+        result = doccano_client.get(f'{url}/v1/tasks/status/{task_id}')
+        if result['ready']:
+            break
+        time.sleep(1)
+    result = doccano_client.get_file(f'{url}/v1/projects/{project_id}/download?taskId={task_id}')
+    tmp_zip_path = ASSETS_PATH + '1.zip'
+    with open(tmp_zip_path, 'wb') as f:
+        for chunk in result.iter_content(chunk_size=8192): 
+            f.write(chunk)
+    zipfile.ZipFile(tmp_zip_path).extractall(path=ASSETS_PATH)
+    os.rename(ASSETS_PATH + 'all.jsonl', ASSETS_PATH + path)
+    os.remove(tmp_zip_path)
 
 # df保存jsonl文件
 def d_save_df_datasets(df,path):
