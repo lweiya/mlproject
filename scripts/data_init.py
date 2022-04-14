@@ -13,7 +13,7 @@ import math
 import time
 import zipfile
 import os
-
+from spacy.matcher import PhraseMatcher
 
 def d_parse_config():
     config = configparser.ConfigParser()
@@ -496,7 +496,7 @@ def b_add_new_file_to_db_basic(file):
     b_save_db_basic(df_db)
 
 # 从基础库中抽取未被业务未被抽样的数据
-def b_extrct_data_from_db_basic(dataset_name):
+def b_extrct_data_from_db_basic(dataset_name) -> pd.DataFrame:
     db = b_read_db_basic()
     db_dataset = b_read_db_datasets()
     db_dataset = db_dataset[db_dataset['dataset'].str.contains(dataset_name)]
@@ -547,8 +547,8 @@ def b_doccano_delete(project_id):
     for entry in r['results']:
         doccano_client.delete_document(project_id,entry['id'])
 
-
 # 在doccnano中查看某个标签的情况
+# b_dataset_label_doccano_view('train.json',['招标项目编号'],1)
 def b_dataset_label_doccano_view(file,labels,project_id):
     b_doccano_delete(project_id)
     train = b_read_dataset(file)
@@ -571,6 +571,43 @@ def b_dataset_label_doccano_view(file,labels,project_id):
                 new_train.append(new_entry)
     b_save_list_datasets(new_train,'train_new.json')
     b_doccano_upload('train_new.json')   
+
+# b_cat_data_to_doccano(100,['招标编号','招标项目编号'])
+# 找出一些关键词的数据
+def b_cat_data_to_doccano(number,terms):
+    db = b_extrct_data_from_db_basic('tender')
+
+    number = number
+
+    new_trian = []
+
+    nlp = spacy.load('zh_core_web_lg')
+    matcher = PhraseMatcher(nlp.vocab)
+    terms = terms
+    patterns = [nlp.make_doc(text) for text in terms]
+    matcher.add("匹配条件", patterns)
+
+    for index,row in db.iterrows():
+        new_entry = row
+        text = row['text']
+        doc = nlp(text)
+        matches = matcher(doc)
+        labels = []
+        for match_id, start, end in matches:
+            span = doc[start:end]
+            start = span.start_char
+            end = span.end_char
+            label =[start,end,'其他']
+            labels.append(label)
+        new_entry['label'] = labels
+        new_trian.append(new_entry)
+        if len(new_trian) == number:
+            break
+    df = pd.DataFrame(new_trian)
+    df.rename(columns={'text':'data'},inplace=True)
+    b_save_df_datasets(df,'train_cat.json')
+    b_dataset_label_doccano_view('train_cat.json',['其他'],1)
+
 
 # ——————————————————————————————————————————————————
 # 调用
