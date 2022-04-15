@@ -137,3 +137,14 @@ dmypy.json
 scripts/config.ini
 .DS_Store
 .DS_Store
+scripts/bert-base-chinese-finetuned-ner/runs/Apr15_16-47-49_liuxinxindeMBP/events.out.tfevents.1650012632.liuxinxindeMBP.29254.0
+scripts/bert-base-chinese-finetuned-ner/runs/Apr15_16-47-49_liuxinxindeMBP/events.out.tfevents.1650012939.liuxinxindeMBP.29254.3
+scripts/bert-base-chinese-finetuned-ner/runs/Apr15_16-47-49_liuxinxindeMBP/1650012632.767456/events.out.tfevents.1650012632.liuxinxindeMBP.29254.1
+scripts/bert-base-chinese-finetuned-ner/runs/Apr15_16-47-49_liuxinxindeMBP/1650012935.400664/events.out.tfevents.1650012935.liuxinxindeMBP.29254.2
+scripts/bert-base-chinese-finetuned-ner/runs/Apr15_16-47-49_liuxinxindeMBP/1650012939.435843/events.out.tfevents.1650012939.liuxinxindeMBP.29254.4
+scripts/wandb/latest-run
+scripts/wandb/run-20220415_165444-2vujtucd/run-2vujtucd.wandb
+scripts/wandb/run-20220415_165444-2vujtucd/files/config.yaml
+scripts/wandb/run-20220415_165444-2vujtucd/files/requirements.txt
+scripts/wandb/run-20220415_165444-2vujtucd/files/wandb-metadata.json
+scripts/wandb/run-20220415_165444-2vujtucd/files/wandb-summary.json

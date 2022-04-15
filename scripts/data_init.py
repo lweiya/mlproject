@@ -628,7 +628,7 @@ def b_label_dataset(file):
 # 合并数据集标签
 # b_conbine_dataseet_label('test_label_1.json','招标项目编号')
 def b_conbine_dataset_label(file,label_name):
-    file_name = '_'.join(test.split('_')[:-1])
+    file_name = '_'.join(file.split('_')[:-1])
     data = b_read_dataset(file)
     origin_data = b_read_dataset(file_name + '.json')
 
@@ -672,7 +672,7 @@ def b_json2bio(file):
         f_write.write("\n")
 
 # 将预测转换成json
-def b_convert_bio_json(text,predict)
+def b_convert_bio_json(text,predict):
     string="我是李明，我爱中国，我来自呼和浩特"
     predict=["o","o","i-per","i-per","o","o","o","b-loc","i-loc","o","o","o","o","b-per","i-loc","i-loc","i-loc"]
     item = {"string": string, "entities": []}
@@ -715,12 +715,17 @@ def b_convert_bio_json(text,predict)
 #     pass
 
 
+b_doccano_dataset_label_view('train.json',['招标项目编号'],1)
 
+db = b_extrct_data_from_db_basic('tender')
 
+df_db = pd.DataFrame(db)
 
+b_doccano_cat_data(df_db,100,['招标编号','招标项目编号'])
 
+b_save_df_datasets(df_db,'test2_label.json')
 
-
+b_label_dataset('test2_label.json')
 
 
 
