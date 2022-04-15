@@ -1,3 +1,4 @@
+from genericpath import sameopenfile
 import pickle
 import os
 import pandas as pd
@@ -14,6 +15,7 @@ import time
 import zipfile
 import os
 from spacy.matcher import PhraseMatcher
+from yaml import safe_dump_all
 
 def d_parse_config():
     config = configparser.ConfigParser()
@@ -520,7 +522,7 @@ def b_select_data_by_model(dataset_name,num):
     return pd.DataFrame(sample_data)
 
     # 从doccano获取数据
-def b_export_project(project_id,path):
+def b_doccano_export_project(project_id,path):
     url = configs['doccano']['url']
     result = doccano_client.post(f'{url}/v1/projects/{project_id}/download', json={'exportApproved': False, 'format': 'JSONL'}) 
     task_id = result['task_id']
@@ -549,7 +551,7 @@ def b_doccano_delete(project_id):
 
 # 在doccnano中查看某个标签的情况
 # b_dataset_label_doccano_view('train.json',['招标项目编号'],1)
-def b_dataset_label_doccano_view(file,labels,project_id):
+def b_doccano_dataset_label_view(file,labels,project_id):
     b_doccano_delete(project_id)
     train = b_read_dataset(file)
     new_train = []
@@ -572,10 +574,9 @@ def b_dataset_label_doccano_view(file,labels,project_id):
     b_save_list_datasets(new_train,'train_new.json')
     b_doccano_upload('train_new.json')   
 
-# b_cat_data_to_doccano(100,['招标编号','招标项目编号'])
+# b_cat_data_to_doccano(db,100,['招标编号','招标项目编号'])
 # 找出一些关键词的数据
-def b_cat_data_to_doccano(number,terms):
-    db = b_extrct_data_from_db_basic('tender')
+def b_doccano_cat_data(df,number,terms):
 
     number = number
 
@@ -587,7 +588,7 @@ def b_cat_data_to_doccano(number,terms):
     patterns = [nlp.make_doc(text) for text in terms]
     matcher.add("匹配条件", patterns)
 
-    for index,row in db.iterrows():
+    for index,row in df.iterrows():
         new_entry = row
         text = row['text']
         doc = nlp(text)
@@ -606,8 +607,45 @@ def b_cat_data_to_doccano(number,terms):
     df = pd.DataFrame(new_trian)
     df.rename(columns={'text':'data'},inplace=True)
     b_save_df_datasets(df,'train_cat.json')
-    b_dataset_label_doccano_view('train_cat.json',['其他'],1)
+    b_doccano_dataset_label_view('train_cat.json',['其他'],1)
 
+# 标注数据集
+# b_label_dataset
+def b_label_dataset(file):
+    file_name = file.split('.')[0]
+    data = b_read_dataset(file)
+    nlp = b_load_best_model()
+    data_text = [ entry['text'] for entry in data ]
+    docs = nlp.pipe(data_text)
+    for doc,sample in zip(docs,data):
+        labels = []
+        for ent in doc.ents:
+            labels.append([ent.start_char,ent.end_char,ent.label_])
+        sample['label'] = labels
+    b_save_list_datasets(data,file_name + '_label.json')
+
+
+# 合并数据集标签
+# b_conbine_dataseet_label('test_label_1.json','招标项目编号')
+def b_conbine_dataset_label(file,label_name):
+    file_name = '_'.join(test.split('_')[:-1])
+    data = b_read_dataset(file)
+    origin_data = b_read_dataset(file_name + '.json')
+
+    for sample in data:
+        id  = sample['id']
+        s_start = sample['s_start']
+        # 找到test中的对应的数据
+        for entry in origin_data:
+            if entry['id'] == id:
+                break
+        for label in sample['label']:
+            if label[2] == label_name:
+                start = label[0] + s_start
+                end = label[1] + s_start
+                entry['label'].append([start,end,label[2]])
+    
+    b_save_list_datasets(origin_data,file_name + '_2.json')
 
 # ——————————————————————————————————————————————————
 # 调用
@@ -617,6 +655,19 @@ def b_cat_data_to_doccano(number,terms):
 #     pass
 
 
+
+
+
+    
+
+
+
+
+
+
+b_doccano_upload('test_label_2.json')
+
+test = 'test_label_1.json'
 
 
 
