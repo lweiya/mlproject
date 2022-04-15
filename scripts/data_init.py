@@ -542,7 +542,7 @@ def b_doccano_export_project(project_id,path):
 
 
 # 删除项目中的数据
-def b_doccano_delete(project_id):
+def b_doccano_delete_project(project_id):
     r = doccano_client.get_document_list(project_id)
     length = r['count']
     r = doccano_client.get_document_list(project_id,{'limit':[length],'offset':[0]})
@@ -552,7 +552,7 @@ def b_doccano_delete(project_id):
 # 在doccnano中查看某个标签的情况
 # b_dataset_label_doccano_view('train.json',['招标项目编号'],1)
 def b_doccano_dataset_label_view(file,labels,project_id):
-    b_doccano_delete(project_id)
+    b_doccano_delete_project(project_id)
     train = b_read_dataset(file)
     new_train = []
     for entry in train:
@@ -647,6 +647,66 @@ def b_conbine_dataset_label(file,label_name):
     
     b_save_list_datasets(origin_data,file_name + '_2.json')
 
+# 转换json变成bio
+def b_json2bio(file):
+    '''
+    将json文件中的数据转录为BIO形式，保存规则可以在43行修改
+    '''
+    file_name = file.split('.')[0]
+    f_write = open(ASSETS_PATH + file_name + '_bio.txt', 'w', encoding='utf-8')
+    load = b_read_dataset(file)
+    for i in range(len(load)):
+        labels = load[i]['label']
+        text = load[i]['text']
+        tags = ['O'] * len(text)
+        for j in range(len(labels)):
+            label = labels[j]
+            tags[label[0]] = 'B-' + str(label[2])
+            k = label[0]+1
+            while k < label[1]:
+                tags[k] = 'I-' + str(label[2])
+                k += 1
+        print(tags)
+        for word, tag in zip(text, tags):
+            f_write.write(word + '\t' + tag + '\n')
+        f_write.write("\n")
+
+# 将预测转换成json
+def b_convert_bio_json(text,predict)
+    string="我是李明，我爱中国，我来自呼和浩特"
+    predict=["o","o","i-per","i-per","o","o","o","b-loc","i-loc","o","o","o","o","b-per","i-loc","i-loc","i-loc"]
+    item = {"string": string, "entities": []}
+    entity_name = ""
+    flag=[]
+    visit=False
+    for char, tag in zip(string, predict):
+        if tag[0] == "b":
+            if entity_name!="":
+                x=dict((a,flag.count(a)) for a in flag)
+                y=[k for k,v in x.items() if max(x.values())==v]
+                item["entities"].append({"word": entity_name,"type": y[0]})
+                flag.clear()
+                entity_name=""
+            entity_name += char
+            flag.append(tag[2:])
+        elif tag[0]=="i":
+            entity_name += char
+            flag.append(tag[2:])
+        else:
+            if entity_name!="":
+                x=dict((a,flag.count(a)) for a in flag)
+                y=[k for k,v in x.items() if max(x.values())==v]
+                item["entities"].append({"word": entity_name,"type": y[0]})
+                flag.clear()
+            flag.clear()
+            entity_name=""
+    
+    if entity_name!="":
+        x=dict((a,flag.count(a)) for a in flag)
+        y=[k for k,v in x.items() if max(x.values())==v]
+        item["entities"].append({"word": entity_name,"type": y[0]})
+    return item 
+
 # ——————————————————————————————————————————————————
 # 调用
 # ——————————————————————————————————————————————————
@@ -657,17 +717,6 @@ def b_conbine_dataset_label(file,label_name):
 
 
 
-
-    
-
-
-
-
-
-
-b_doccano_upload('test_label_2.json')
-
-test = 'test_label_1.json'
 
 
 
