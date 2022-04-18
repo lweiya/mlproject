@@ -12,10 +12,53 @@ tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
 
 bio_labels = b_generate_biolabels_from('labels.txt')
 
+# max_length = 510
+
+# data = b_read_dataset('dev_trf.json')
+
+# new_data = []
+# for sample in data:
+#     data_text = sample["data"]
+#     data_label = sample["label"]
+
+#     divs = len(data_text)/max_length + 1
+
+#     every = len(data_text)// divs
+
+#     befor_after = (max_length - every ) // 2
+
+
+#     for i in range (0,int(divs)):
+#         new_sample = {}
+#         start  = i * every
+#         end = (i+1) * every
+#         if i == 0:
+#             end = end + befor_after * 2
+#         elif i == int(divs) - 1:
+#             start = start - befor_after * 2
+#         else:
+#             start = start - befor_after
+#             end = end + befor_after
+#         start = start if start >= 0 else 0
+#         end = end if end <= len(data_text) else len(data_text)
+#         start = int(start)
+#         end = int(end)
+#         new_text_data = data_text[start:end]
+#         new_label_data = data_label[start:end]
+#         new_sample["data"] = new_text_data
+#         new_sample["label"] = new_label_data
+#         new_data.append(new_sample)
+
+# for sample in new_data:
+#     print(len(sample["data"]),len(sample["label"]))
+
+# b_save_list_datasets(new_data,'train_trf_2.json')
+# b_save_list_datasets(new_data,'dev_trf_2.json')
+
 # b_trans_dataset_bio(bio_labels,'train.json')
 # b_trans_dataset_bio(bio_labels,'dev.json')
 
-datasets = load_dataset('json', data_files= {'train': ASSETS_PATH + 'train_trf.json', 'dev': ASSETS_PATH + 'dev_trf.json'})
+datasets = load_dataset('json', data_files= {'train': ASSETS_PATH + 'train_trf_2.json', 'dev': ASSETS_PATH + 'dev_trf_2.json'})
 
 label_all_tokens = True
 # 对齐label
