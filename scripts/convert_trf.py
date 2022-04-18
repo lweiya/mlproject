@@ -20,7 +20,7 @@ datasets = load_dataset('json', data_files= {'train': ASSETS_PATH + 'train_trf.j
 label_all_tokens = True
 # 对齐label
 def tokenize_and_align_labels(examples):
-    tokenized_inputs = tokenizer(examples["data"], truncation=True, is_split_into_words=True)
+    tokenized_inputs = tokenizer(examples["data"], truncation=True, is_split_into_words=True,padding='max_length', max_length=512)
 
     labels = []
     for i, label in enumerate(examples["label"]):
@@ -69,7 +69,7 @@ args = TrainingArguments(
 
 metric = load_metric("seqeval")
 
-data_collator = DataCollatorForTokenClassification(tokenizer,padding='max_length',max_length=512)
+data_collator = DataCollatorForTokenClassification(tokenizer)
 
 def compute_metrics(p):
     predictions, labels = p
