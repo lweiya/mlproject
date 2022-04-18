@@ -47,6 +47,8 @@ def tokenize_and_align_labels(examples):
     return tokenized_inputs
 
 tokenized_datasets = datasets.map(tokenize_and_align_labels, batched=True)
+# 去掉 data,label
+tokenized_datasets.remove_columns(["data", "label"])
 
 model = AutoModelForTokenClassification.from_pretrained(model_checkpoint, num_labels=len(bio_labels))
 

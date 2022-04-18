@@ -148,3 +148,4 @@ scripts/wandb/run-20220415_165444-2vujtucd/files/config.yaml
 scripts/wandb/run-20220415_165444-2vujtucd/files/requirements.txt
 scripts/wandb/run-20220415_165444-2vujtucd/files/wandb-metadata.json
 scripts/wandb/run-20220415_165444-2vujtucd/files/wandb-summary.json
+scripts/seqeval.py
