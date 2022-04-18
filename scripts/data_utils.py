@@ -382,9 +382,7 @@ def b_check_random(data,num):
         label = random.sample(labels,1)[0]
         print(text[label[0]:label[1]],label[2])
 
-# 上传到doccano测试项目
-def b_doccano_upload(file,project_id):
-    doccano_client.post_doc_upload(project_id,file,ASSETS_PATH)
+
 
 # 根据最好的模型、训练集，测试集生成cats模型
 def b_generate_cats_datasets():
@@ -519,6 +517,10 @@ def b_select_data_by_model(dataset_name,num):
             break
 
     return pd.DataFrame(sample_data)
+
+# 上传到doccano测试项目
+def b_doccano_upload(file,project_id):
+    doccano_client.post_doc_upload(project_id,file,ASSETS_PATH)
 
     # 从doccano获取数据
 def b_doccano_export_project(project_id,path):
@@ -737,6 +739,49 @@ def b_initial_dataset(name,num,ratio,train_id,test_id):
     df_train_test = pd.concat([df_train,df_test])
 
     b_save_db_datasets(df_train_test)
+
+# 从labels.txt中生成biolabels
+# b_generate_biolabels_from('labels.txt')
+def b_generate_biolabels_from(file):
+    labels = b_read_text_file(file)
+
+    bio_labels = []
+    for label in labels:
+        bio_labels.append('B-'+label)
+        bio_labels.append('I-'+label)
+    bio_labels = ['O'] + bio_labels
+    return bio_labels
+
+
+# 将json标注改成数组对应标注法
+# b_trans_dataset_bio(bio_labels,'train.json')
+def b_trans_dataset_bio(bio_labels,file):
+    file_name = file.split('.')[0]
+    data  = b_read_dataset(file)
+    
+    new_data = []
+    for sample in data:
+        new_sample = {}
+        text = sample['data']
+        l_text = list(text)
+        new_sample['data'] = l_text
+        new_sample_label = [0] * len(l_text)
+        for label in sample['label']:
+            start = label[0]
+            end = label[1]
+            label_ = label[2]
+            new_sample_label[start] = bio_labels.index('B-' + label_) 
+            for i in range(start+1,end):
+                new_sample_label[i] = bio_labels.index('I-' + label_)
+        new_sample['label'] = new_sample_label
+        new_data.append(new_sample)
+
+    b_save_list_datasets(new_data,file_name + '_trf.json')
+
+# 根据datasource查找原始数据
+def b_find_orig_by_data_source(file,data_source):
+    df = pd.read_csv(DATA_PATH + file)
+    return df[df['data_source']==data_source].values[0]['details']
 # ——————————————————————————————————————————————————
 # 调用
 # ——————————————————————————————————————————————————
