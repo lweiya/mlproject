@@ -69,7 +69,7 @@ args = TrainingArguments(
 
 metric = load_metric("seqeval")
 
-data_collator = DataCollatorForTokenClassification(tokenizer,padding=True,max_length=512)
+data_collator = DataCollatorForTokenClassification(tokenizer,padding='max_length',max_length=512)
 
 def compute_metrics(p):
     predictions, labels = p
