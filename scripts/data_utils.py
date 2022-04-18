@@ -383,8 +383,8 @@ def b_check_random(data,num):
         print(text[label[0]:label[1]],label[2])
 
 # 上传到doccano测试项目
-def b_doccano_upload(file):
-    doccano_client.post_doc_upload(1,file,ASSETS_PATH)
+def b_doccano_upload(file,project_id):
+    doccano_client.post_doc_upload(project_id,file,ASSETS_PATH)
 
 # 根据最好的模型、训练集，测试集生成cats模型
 def b_generate_cats_datasets():
@@ -706,6 +706,37 @@ def b_convert_bio_json(text,predict):
         item["entities"].append({"word": entity_name,"type": y[0]})
     return item 
 
+# 传入df，划分数据集
+def b_split_train_test(df_db,ratio):
+    df_train = df_db.sample(frac=ratio)
+    df_test = df_db.drop(df_train.index)
+    return df_train,df_test
+
+# 随机根据业务初始化数据集，并且上传到doccano
+def b_initial_dataset(name,num,ratio,train_id,test_id):
+    db = b_read_db_basic()
+    # 随机抽取1000条数据
+    df_db = pd.DataFrame(db)
+    df_db = df_db.sample(num)
+
+    # 按照这2：8的比例切分训练和测试
+    df_train,df_test = b_split_train_test(df_db,ratio)
+
+    # 分别保存到json文件中
+    b_save_df_datasets(df_train,'train.json')
+    b_save_df_datasets(df_test,'test.json')
+
+    # 分别上传到doccano
+    b_doccano_upload('train.json',train_id)
+    b_doccano_upload('test.json',test_id)
+
+    df_train['dataset'] = name + '_train'
+    df_test['dataset'] = name + '_test'
+
+    # 合并两个数据集
+    df_train_test = pd.concat([df_train,df_test])
+
+    b_save_db_datasets(df_train_test)
 # ——————————————————————————————————————————————————
 # 调用
 # ——————————————————————————————————————————————————
