@@ -1,4 +1,3 @@
-from genericpath import sameopenfile
 import pickle
 import os
 import pandas as pd
@@ -711,21 +710,8 @@ def b_convert_bio_json(text,predict):
 # 调用
 # ——————————————————————————————————————————————————
 
-# if __name__ == '__main__':
-#     pass
-
-
-b_doccano_dataset_label_view('train.json',['招标项目编号'],1)
-
-db = b_extrct_data_from_db_basic('tender')
-
-df_db = pd.DataFrame(db)
-
-b_doccano_cat_data(df_db,100,['招标编号','招标项目编号'])
-
-b_save_df_datasets(df_db,'test2_label.json')
-
-b_label_dataset('test2_label.json')
+if __name__ == '__main__':
+    pass
 
 
 
