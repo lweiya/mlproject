@@ -9,6 +9,7 @@ import random
 import re
 import time
 import zipfile
+import copy
 
 import pandas as pd
 import spacy
@@ -551,7 +552,7 @@ def b_doccano_delete_project(project_id):
         doccano_client.delete_document(project_id,entry['id'])
 
 # 在doccnano中查看某个标签的情况
-# b_dataset_label_doccano_view('train.json',['招标项目编号'],1)
+# b_doccano_dataset_label_view('train.json',['招标项目编号'],1)
 def b_doccano_dataset_label_view(file,labels,project_id):
     b_doccano_delete_project(project_id)
     train = b_read_dataset(file)
@@ -559,9 +560,9 @@ def b_doccano_dataset_label_view(file,labels,project_id):
     for entry in train:
         text = entry['data']
         for label in entry['label']:
-            new_entry = {}
+            new_entry = copy.deepcopy(entry)
+            new_entry.remove('data')
             new_entry['id'] = entry['id']
-            new_entry['data_source'] = entry['data_source']
             start = label[0]
             end = label[1]
             s_start = start - 200 if start - 200 > 0 else 0
@@ -874,6 +875,40 @@ def b_bio_split_dataset_by_max(file,max_len):
             new_data.append(new_sample)
 
     b_save_list_datasets(new_data,file_name  + '_maxlen.json')
+
+
+# 同步train.json和dev.json的数据到doccano中
+def b_doccano_train_dev():
+    train = b_read_dataset('train.json')
+    dev = b_read_dataset('dev.json')
+
+    train_dev = train + dev
+
+    df = pd.DataFrame(train_dev)
+
+    df['md5'] = df['data'].apply(p_generate_md5)
+
+    db = b_read_db_datasets()
+
+    db_new = pd.merge(db,df,left_on='md5',right_on='md5',how='left')
+
+    db_new = db_new.dropna()
+
+    db_new = db_new.drop(['data'],axis=1)
+
+    db_new_train = db_new[db_new['dataset']=='tender_train']
+    db_new_dev = db_new[db_new['dataset']=='tender_dev']
+
+    b_save_df_datasets(db_new_train,'train_imp.json')
+    b_save_df_datasets(db_new_dev,'dev_imp.json')
+
+    b_doccano_upload('train_imp.json',2)
+    b_doccano_upload('dev_imp.json',3)
+
+    # 去掉db_new的label列
+    db_new = db_new.drop(['label'],axis=1)
+
+    b_save_db_datasets(db_new)
 
 # ——————————————————————————————————————————————————
 # 调用

@@ -15,29 +15,33 @@ def test():
     # 合并标注数据标签和原始数据
     b_conbine_dataset_label('test2_label_1.json','招标项目编号')
 
+    # 将json训练数据转换为bio标签
+    bio_labels = b_generate_biolabels_from('labels.txt')
+    # 将json训练数据转换为bio训练数据 train_trf.json文件
+    b_trans_dataset_bio(bio_labels,'train.json')
+    b_trans_dataset_bio(bio_labels,'dev.json')
+    # 划分数据集为更小的集合
+    b_bio_split_dataset_by_max('train_trf.json',510)
+    b_bio_split_dataset_by_max('dev_trf.json',510)
 
 
+train = b_read_dataset('train.json')
+dev = b_read_dataset('dev.json')
 
+train_dev = train + dev
 
+df = pd.DataFrame(train_dev)
 
+db = b_read_db_datasets()
 
+df['md5'] = df['data'].apply(p_generate_md5)
 
+db_new = pd.merge(db,df,left_on='md5',right_on='md5',how='left')
 
-for text, annotations in train:
-    entities = annotations['labele']
-    valid_entities = []
-    for start, end, label in entities:
-        valid_start = start
-        valid_end = end
-        # if there's preceding spaces, move the start position to nearest character
-        while valid_start < len(text) and invalid_span_tokens.match(
-                text[valid_start]):
-            valid_start += 1
-        while valid_end > 1 and invalid_span_tokens.match(
-                text[valid_end - 1]):
-            valid_end -= 1
-        valid_entities.append([valid_start, valid_end, label])
-    cleaned_data.append([text, {'entities': valid_entities}])
-return cleaned_data
+db_new = db_new.dropna()
+
+db_new.rename(columns={'data':'text'},inplace=True)
+
+b_save_df_datasets(db_new,'train_dev.json')
 
 
