@@ -573,7 +573,7 @@ def b_doccano_dataset_label_view(file,labels,project_id):
             if label[2] in labels:
                 new_train.append(new_entry)
     b_save_list_datasets(new_train,'train_new.json')
-    b_doccano_upload('train_new.json')   
+    b_doccano_upload('train_new.json',project_id)   
 
 # b_cat_data_to_doccano(db,100,['招标编号','招标项目编号'])
 # 找出一些关键词的数据

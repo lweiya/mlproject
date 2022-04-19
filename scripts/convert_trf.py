@@ -97,7 +97,7 @@ model = AutoModelForTokenClassification.from_pretrained(model_checkpoint, num_la
 
 model_name = model_checkpoint.split("/")[-1]
 
-batch_size = 16
+batch_size = 8
 
 args = TrainingArguments(
     f"{model_name}-finetuned-{task}",
