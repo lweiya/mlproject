@@ -678,7 +678,7 @@ def b_change_label(file,label_file,label_names):
                 sample['labels'].append([start,end,label[2]])
     
     b_save_list_datasets(data,file)
-    
+
 # 转换json变成bio
 def b_json2bio(file):
     '''
@@ -935,7 +935,17 @@ def b_combine_train_dev_meta():
     b_save_df_datasets(db_new,'train_dev.json')
 
 
+# 将train_dev数据集划分为train,dev，并且保存
+def b_split_train_dev():
+    train_dev = b_read_dataset('train_dev.json')
 
+    df_train_dev = pd.DataFrame(train_dev)
+
+    train = df_train_dev[df_train_dev['dataset'] == 'tender_train']
+    dev = df_train_dev[df_train_dev['dataset'] == 'tender_dev']
+
+    b_save_df_datasets(train,'train.json')
+    b_save_df_datasets(dev,'dev.json')
 # ——————————————————————————————————————————————————
 # 调用
 # ——————————————————————————————————————————————————
