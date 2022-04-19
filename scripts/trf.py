@@ -1,66 +1,12 @@
 
-from transformers import AutoTokenizer
-from data_utils import *
 import numpy as np
-from transformers import DataCollatorForTokenClassification
-from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer
 from datasets import load_dataset, load_metric
+from transformers import (AutoModelForTokenClassification, AutoTokenizer,
+                          DataCollatorForTokenClassification, Trainer,
+                          TrainingArguments)
 
-model_checkpoint = "bert-base-chinese"
-task = 'ner'
-tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+from data_utils import *
 
-bio_labels = b_generate_biolabels_from('labels.txt')
-
-# max_length = 510
-
-# data = b_read_dataset('dev_trf.json')
-
-# new_data = []
-# for sample in data:
-#     data_text = sample["data"]
-#     data_label = sample["label"]
-
-#     divs = len(data_text)/max_length + 1
-
-#     every = len(data_text)// divs
-
-#     befor_after = (max_length - every ) // 2
-
-
-#     for i in range (0,int(divs)):
-#         new_sample = {}
-#         start  = i * every
-#         end = (i+1) * every
-#         if i == 0:
-#             end = end + befor_after * 2
-#         elif i == int(divs) - 1:
-#             start = start - befor_after * 2
-#         else:
-#             start = start - befor_after
-#             end = end + befor_after
-#         start = start if start >= 0 else 0
-#         end = end if end <= len(data_text) else len(data_text)
-#         start = int(start)
-#         end = int(end)
-#         new_text_data = data_text[start:end]
-#         new_label_data = data_label[start:end]
-#         new_sample["data"] = new_text_data
-#         new_sample["label"] = new_label_data
-#         new_data.append(new_sample)
-
-# for sample in new_data:
-#     print(len(sample["data"]),len(sample["label"]))
-
-# b_save_list_datasets(new_data,'train_trf_2.json')
-# b_save_list_datasets(new_data,'dev_trf_2.json')
-
-# b_trans_dataset_bio(bio_labels,'train.json')
-# b_trans_dataset_bio(bio_labels,'dev.json')
-
-datasets = load_dataset('json', data_files= {'train': ASSETS_PATH + 'train_trf_2.json', 'dev': ASSETS_PATH + 'dev_trf_2.json'})
-
-label_all_tokens = True
 # 对齐label
 def tokenize_and_align_labels(examples):
     tokenized_inputs = tokenizer(examples["data"], truncation=True, is_split_into_words=True,padding='max_length', max_length=512)
@@ -88,6 +34,16 @@ def tokenize_and_align_labels(examples):
 
     tokenized_inputs["labels"] = labels
     return tokenized_inputs
+
+model_checkpoint = "bert-base-chinese"
+task = 'ner'
+tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+
+bio_labels = b_generate_biolabels_from('labels.txt')
+
+datasets = load_dataset('json', data_files= {'train': ASSETS_PATH + 'train_trf_max.json', 'dev': ASSETS_PATH + 'dev_trf_max.json'})
+
+label_all_tokens = True
 
 tokenized_datasets = datasets.map(tokenize_and_align_labels, batched=True)
 # 去掉 data,label
@@ -120,11 +76,11 @@ def compute_metrics(p):
 
     # Remove ignored index (special tokens)
     true_predictions = [
-        [bio_labels[p] for (p, l) in zip(prediction, label) if l != -100]
+        [bio_labels[p] for (p, l) in zip(prediction, label) if l != -100 or l != 0]
         for prediction, label in zip(predictions, labels)
     ]
     true_labels = [
-        [bio_labels[l] for (p, l) in zip(prediction, label) if l != -100]
+        [bio_labels[l] for (p, l) in zip(prediction, label) if l != -100 or l != 0]
         for prediction, label in zip(predictions, labels)
     ]
 

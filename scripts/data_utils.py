@@ -14,7 +14,6 @@ import time
 import zipfile
 import os
 from spacy.matcher import PhraseMatcher
-from yaml import safe_dump_all
 
 def d_parse_config():
     config = configparser.ConfigParser()
@@ -782,6 +781,96 @@ def b_trans_dataset_bio(bio_labels,file):
 def b_find_orig_by_data_source(file,data_source):
     df = pd.read_csv(DATA_PATH + file)
     return df[df['data_source']==data_source].values[0]['details']
+
+# doccano导出数据中不为空的数据整理出来
+# b_get_all_label_data('train.jsonl')
+def b_get_all_label_data(file):
+    file_name = file.split('.')[0]
+
+    train = b_read_dataset(file)
+
+    new_train = []
+
+    for sample in train:
+    # 把label长度不为空的数据提取出来
+        if len(sample['label']) != 0:
+            new_train.append(sample)
+
+    b_save_list_datasets(new_train,file_name + '.json')
+
+# 去除标签中的空格字符
+# b_remove_invalid_label('train.json')
+def b_remove_invalid_label(file):
+    invalid_span_tokens = re.compile(r'\s')
+
+    data = b_read_dataset(file)
+
+    cleaned_datas = []
+    for sample in data:
+        cleaned_data = {}
+        text = sample['data']
+        cleaned_data['data'] = text
+        labels = sample['label']
+        clean_labels = []
+        for start,end,label in labels:
+            valid_start = start
+            valid_end = end
+        # if there's preceding spaces, move the start position to nearest character
+            while valid_start < len(text) and invalid_span_tokens.match(
+                text[valid_start]):
+                valid_start += 1
+            while valid_end > 1 and invalid_span_tokens.match(
+                text[valid_end - 1]):
+                valid_end -= 1
+            clean_labels.append([valid_start, valid_end, label])
+        cleaned_data['label'] = clean_labels
+        cleaned_datas.append(cleaned_data)  
+
+    b_save_list_datasets(cleaned_datas,'file')
+
+# 把bio数据集划分成最长的数据集,并且保存为train_trf_max.json
+#split_dataset_by_max('train_trf.json',510) 
+def split_dataset_by_max(file,max_len):
+    file_name = file.split('.')[0]
+    max_length = max_len
+
+    data = b_read_dataset('dev_trf.json')
+
+    new_data = []
+    for sample in data:
+        data_text = sample["data"]
+        data_label = sample["label"]
+
+        divs = len(data_text)/max_length + 1
+
+        every = len(data_text)// divs
+
+        befor_after = (max_length - every ) // 2
+
+
+        for i in range (0,int(divs)):
+            new_sample = {}
+            start  = i * every
+            end = (i+1) * every
+            if i == 0:
+                end = end + befor_after * 2
+            elif i == int(divs) - 1:
+                start = start - befor_after * 2
+            else:
+                start = start - befor_after
+                end = end + befor_after
+            start = start if start >= 0 else 0
+            end = end if end <= len(data_text) else len(data_text)
+            start = int(start)
+            end = int(end)
+            new_text_data = data_text[start:end]
+            new_label_data = data_label[start:end]
+            new_sample["data"] = new_text_data
+            new_sample["label"] = new_label_data
+            new_data.append(new_sample)
+
+    b_save_list_datasets(new_data,file_name  + '_maxlen.json')
+
 # ——————————————————————————————————————————————————
 # 调用
 # ——————————————————————————————————————————————————
