@@ -25,23 +25,6 @@ def test():
     b_bio_split_dataset_by_max('dev_trf.json',510)
 
 
-train = b_read_dataset('train.json')
-dev = b_read_dataset('dev.json')
 
-train_dev = train + dev
-
-df = pd.DataFrame(train_dev)
-
-db = b_read_db_datasets()
-
-df['md5'] = df['data'].apply(p_generate_md5)
-
-db_new = pd.merge(db,df,left_on='md5',right_on='md5',how='left')
-
-db_new = db_new.dropna()
-
-db_new.rename(columns={'data':'text'},inplace=True)
-
-b_save_df_datasets(db_new,'train_dev.json')
 
 

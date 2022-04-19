@@ -654,28 +654,31 @@ def b_label_dataset(file):
     b_save_list_datasets(data,file_name + '_label.json')
 
 
-# 合并数据集标签
-# b_conbine_dataseet_label('test_label_1.json','招标项目编号')
-def b_conbine_dataset_label(file,label_name):
-    file_name = '_'.join(file.split('_')[:-1])
-    data = b_read_dataset(file)
-    origin_data = b_read_dataset(file_name + '.json')
+# 把demo的label更新到原来的file中
+# b_change_label('train_dev.json','train_dev_label.json',['招标项目编号'])
+def b_change_label(file,label_file,label_names):
+    b_doccano_export_project(1,label_file)
 
-    for sample in data:
-        id  = sample['id']
-        s_start = sample['s_start']
-        # 找到test中的对应的数据
-        for entry in origin_data:
-            if entry['id'] == id:
+    data = b_read_dataset(file)
+    label_data = b_read_dataset(label_file)
+
+    for label_sample in label_data:
+        id = label_sample['id']
+        s_start = label_sample['start']
+        for sample in data:
+            if sample['id'] == id:
                 break
-        for label in sample['label']:
-            if label[2] == label_name:
+        for idx,label in enumerate(sample['labels']):
+            if label[2] in label_names:
+                sample['labels'].remove(label)
+        for label in label_sample['label']:
+            if label[2] in label_names:
                 start = label[0] + s_start
                 end = label[1] + s_start
-                entry['label'].append([start,end,label[2]])
+                sample['labels'].append([start,end,label[2]])
     
-    b_save_list_datasets(origin_data,file_name + '_2.json')
-
+    b_save_list_datasets(data,file)
+    
 # 转换json变成bio
 def b_json2bio(file):
     '''
@@ -909,6 +912,29 @@ def b_doccano_train_dev():
     db_new = db_new.drop(['label'],axis=1)
 
     b_save_db_datasets(db_new)
+
+# 合并train_dev数据，并且附加上meta，保存到train_dev.json
+def b_combine_train_dev_meta():
+    train = b_read_dataset('train.json')
+    dev = b_read_dataset('dev.json')
+
+    train_dev = train + dev
+
+    df = pd.DataFrame(train_dev)
+
+    db = b_read_db_datasets()
+
+    df['md5'] = df['data'].apply(p_generate_md5)
+
+    db_new = pd.merge(db,df,left_on='md5',right_on='md5',how='left')
+
+    db_new = db_new.dropna()
+
+    db_new.rename(columns={'data':'text'},inplace=True)
+
+    b_save_df_datasets(db_new,'train_dev.json')
+
+
 
 # ——————————————————————————————————————————————————
 # 调用
