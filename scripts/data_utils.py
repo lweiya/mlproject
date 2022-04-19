@@ -1,19 +1,20 @@
-import pickle
-import os
-import pandas as pd
-import hashlib
-import re
-import json
-import spacy
-import random
-import itertools
-from doccano_api_client import DoccanoClient
 import configparser
+import hashlib
+import itertools
+import json
 import math
+import os
+import pickle
+import random
+import re
 import time
 import zipfile
-import os
+
+import pandas as pd
+import spacy
+from doccano_api_client import DoccanoClient
 from spacy.matcher import PhraseMatcher
+
 
 def d_parse_config():
     config = configparser.ConfigParser()
@@ -560,6 +561,7 @@ def b_doccano_dataset_label_view(file,labels,project_id):
         for label in entry['label']:
             new_entry = {}
             new_entry['id'] = entry['id']
+            new_entry['data_source'] = entry['data_source']
             start = label[0]
             end = label[1]
             s_start = start - 200 if start - 200 > 0 else 0
@@ -608,6 +610,32 @@ def b_doccano_cat_data(df,number,terms):
     df.rename(columns={'text':'data'},inplace=True)
     b_save_df_datasets(df,'train_cat.json')
     b_doccano_dataset_label_view('train_cat.json',['其他'],1)
+
+# 随机根据业务初始化数据集，并且上传到doccano
+def b_doccano_init_dataseet(name,num,ratio,train_id,test_id):
+    db = b_read_db_basic()
+    # 随机抽取1000条数据
+    df_db = pd.DataFrame(db)
+    df_db = df_db.sample(num)
+
+    # 按照这2：8的比例切分训练和测试
+    df_train,df_test = b_split_train_test(df_db,ratio)
+
+    # 分别保存到json文件中
+    b_save_df_datasets(df_train,'train.json')
+    b_save_df_datasets(df_test,'test.json')
+
+    # 分别上传到doccano
+    b_doccano_upload('train.json',train_id)
+    b_doccano_upload('test.json',test_id)
+
+    df_train['dataset'] = name + '_train'
+    df_test['dataset'] = name + '_test'
+
+    # 合并两个数据集
+    df_train_test = pd.concat([df_train,df_test])
+
+    b_save_db_datasets(df_train_test)
 
 # 标注数据集
 # b_label_dataset
@@ -713,31 +741,7 @@ def b_split_train_test(df_db,ratio):
     df_test = df_db.drop(df_train.index)
     return df_train,df_test
 
-# 随机根据业务初始化数据集，并且上传到doccano
-def b_initial_dataset(name,num,ratio,train_id,test_id):
-    db = b_read_db_basic()
-    # 随机抽取1000条数据
-    df_db = pd.DataFrame(db)
-    df_db = df_db.sample(num)
 
-    # 按照这2：8的比例切分训练和测试
-    df_train,df_test = b_split_train_test(df_db,ratio)
-
-    # 分别保存到json文件中
-    b_save_df_datasets(df_train,'train.json')
-    b_save_df_datasets(df_test,'test.json')
-
-    # 分别上传到doccano
-    b_doccano_upload('train.json',train_id)
-    b_doccano_upload('test.json',test_id)
-
-    df_train['dataset'] = name + '_train'
-    df_test['dataset'] = name + '_test'
-
-    # 合并两个数据集
-    df_train_test = pd.concat([df_train,df_test])
-
-    b_save_db_datasets(df_train_test)
 
 # 从labels.txt中生成biolabels
 # b_generate_biolabels_from('labels.txt')
@@ -830,7 +834,7 @@ def b_remove_invalid_label(file):
 
 # 把bio数据集划分成最长的数据集,并且保存为train_trf_max.json
 #split_dataset_by_max('train_trf.json',510) 
-def split_dataset_by_max(file,max_len):
+def b_bio_split_dataset_by_max(file,max_len):
     file_name = file.split('.')[0]
     max_length = max_len
 
